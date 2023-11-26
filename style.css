@@ -1,0 +1,32 @@
+body{
+	width: 100%;
+	height: 100%;
+	background-color: #000000;
+}
+
+video{
+	position: absolute;
+	top: 100px;
+	left: 0;
+}
+canvas{
+	display: block;
+	position: fixed;
+	margin: auto;
+	top: 0;
+	left: 0;
+}
+
+@font-face{
+	font-family: 'bold Kalam';
+    src: url('font\\Kalam-Bold.ttf');
+}
+@font-face{
+	font-family: 'light Kalam';
+    src: url('font\\Kalam-Light.ttf');
+}
+@font-face{
+	font-family: 'Kalam';
+    src: url('font\\Kalam-Regular.ttf');
+}
+
