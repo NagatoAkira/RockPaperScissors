@@ -2,15 +2,19 @@ canvas = document.querySelector("canvas")
 ctx = canvas.getContext('2d')
 
 canvas.height = window.innerHeight
-canvas.width = canvas.height/16*9
+canvas.width = window.innerWidth
 
 let rock = new Image()
 let scissors = new Image()
 let paper = new Image()
+let auto = new Image()
+let trash = new Image()
 
 rock.src = 'pictures\\rock.png'
 scissors.src = 'pictures\\scissors.png'
 paper.src = 'pictures\\paper.png'
+auto.src = 'pictures\\auto.png'
+trash.src = 'pictures\\trash.png'
 
 function game_update(){
 	ctx.clearRect(0,0,canvas.width, canvas.height)
@@ -237,19 +241,100 @@ class Objects{
 	}
 }
 
+class Panel{
+	constructor(objects){
+		this.objects = objects
+
+		this.padding = 20
+		this.objSize = 90
+		this.panel = {rock: {x: this.padding, y: this.padding, unit: 'r'}, 
+					  paper: {x: this.padding + (this.objSize + this.padding), y: this.padding, unit: 'p'}, 
+					  scissors: {x: this.padding + (this.objSize + this.padding)*2, y: this.padding, unit: 's'},
+					  auto: {x: this.padding + (this.objSize + this.padding)*3, y: this.padding, unit: 'a'},
+					  trash: {x: canvas.width - (this.objSize + this.padding), y: this.padding, unit: 't'}}
+		
+		this.curr_obj = null
+
+		this.isAuto = false
+		this.doSpawn = false
+		
+	}
+	drawPanel(){
+		let size = this.objSize
+		let panel = this.panel
+
+		ctx.drawImage(scissors, panel.scissors.x, panel.scissors.y, size, size)
+		ctx.drawImage(rock, panel.rock.x, panel.rock.y, size, size)
+		ctx.drawImage(paper, panel.paper.x, panel.paper.y, size, size)
+		ctx.drawImage(auto, panel.auto.x, panel.auto.y, size, size)
+		ctx.drawImage(trash, panel.trash.x, panel.trash.y, size, size)
+	}
+	drawPicked(){
+		ctx.fillStyle = '#000000'
+
+		let size = this.objSize
+		if (this.curr_obj != null){
+			let obj = this.curr_obj
+			ctx.globalAlpha = 0.2
+			ctx.fillRect(obj.x+size/2-size*1.2/2, obj.y+size/2-size*1.2/2, size*1.2, size*1.2,)
+			ctx.globalAlpha = 1
+		}
+	}
+	autoGen(){
+		if(this.curr_obj.unit == 'a'){	
+			let Units = ['s','p','r']
+			for(let i=0; i<200; i++){
+				let x,y,unit;
+				x = Math.random()*canvas.width
+				y = Math.random()*canvas.height
+
+				unit = Units[Math.floor(Math.random()*3)]
+
+				this.objects.appendObj(x,y,unit)
+			}
+			this.curr_obj = null
+		}
+	}
+	clear(){
+		if(this.curr_obj.unit == 't'){
+			for(let obj in this.objects.army){
+				obj = this.objects.army[obj]
+				obj.army = []
+			}
+			this.curr_obj = null
+		}
+	}
+	pick(x,y){
+		let size = this.objSize
+		for (let obj in this.panel){
+			obj = this.panel[obj]
+			if (distance(x, y, obj.x+size/2, obj.y+size/2) < size/2){
+				this.curr_obj = obj
+				this.doSpawn = false
+				return null
+			}
+		}
+		this.doSpawn = true
+	}
+	put(x,y){
+		if(this.doSpawn && this.curr_obj != null){
+			this.objects.appendObj(x,y, this.curr_obj.unit)
+		}
+	}
+	draw(){
+		this.drawPicked()
+		this.drawPanel()
+	}
+	update(){
+		this.draw()
+	}
+}
+
 const fps = 60
 
 var objects = new Objects()
-let Units = ['s','p','r']
-for(let i=0; i<200; i++){
-	let x,y,unit;
-	x = Math.random()*canvas.width
-	y = Math.random()*canvas.height
+var panel = new Panel(objects)
 
-	unit = Units[Math.floor(Math.random()*3)]
-
-	objects.appendObj(x,y,unit)
-}
 
 function animate(){
 	setTimeout(()=>{
@@ -258,6 +343,16 @@ function animate(){
 	game_update()
 
 	objects.update()
+	panel.update()
 }
+
+onmousedown = (event) => {
+	panel.pick(event.clientX, event.clientY)
+	if(panel.curr_obj != null){
+		panel.autoGen()
+		panel.clear()
+		panel.put(event.clientX, event.clientY)
+	}
+};
 
 animate()
